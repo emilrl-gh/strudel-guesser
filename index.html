@@ -1,0 +1,125 @@
+<!doctype html>
+<script src="https://unpkg.com/@strudel/web@1.0.3"></script>
+<script src="https://unpkg.com/@strudel/repl@latest"></script>
+<style>
+  .container {
+    max-width: 1000px;
+    margin: 50px auto;
+    text-align: center;
+  }
+  .title {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+  }
+  .content {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  .left-side {
+    flex: 1;
+  }
+  .right-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+  .error-message {
+    color: red;
+    font-family: Helvetica, sans-serif;
+    margin-top: 10px;
+  }
+  #editor {
+    text-align: left;
+    width: 100%;
+  }
+</style>
+<div class="container">
+  <h1 class="title">Can you guess the Strudel?</h1>
+  <div class="content">
+    <div class="left-side">
+      <div id="editor">
+      <strudel-editor id="repl">
+        <!--
+        setcps(1)
+        n("<0 1 2 3 4>*8").scale('G4 minor')
+        .s("gm_lead_6_voice")
+        .clip(sine.range(.2,.8).slow(8))
+        .jux(rev)
+        .room(2)
+        .sometimes(add(note("12")))
+        .lpf(perlin.range(200,20000).slow(4))
+        -->
+      </strudel-editor>
+      </div>
+      <div>
+        <button id="play">play</button>
+        <button id="stop">stop</button>
+      </div>
+      <div id="error" class="error-message"></div>
+    </div>
+    <div class="right-side">
+      <div style="text-align:center;">
+        <button id="play-side" onclick="playsound()" style="padding:12px 20px;font-size:18px;cursor:pointer;">Play generated pattern</button>
+        <button id="stop-side" onclick="stopSound()" style="padding:12px 20px;font-size:18px;cursor:pointer;">Stop</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const repl = document.getElementById('repl');
+  const playButton = document.getElementById('play');
+  const stopButton = document.getElementById('stop');
+  const errorDiv = document.getElementById('error');
+  console.log(repl.editor);  
+  playButton.addEventListener('click', () => {
+    try {
+      repl.editor.repl.evaluate(repl.editor.code);
+      repl.editor.repl.start();
+    } catch (e) {
+      console.error(e);
+      errorDiv.textContent = e.message;
+    }
+  });
+
+  function generateStrudelPattern() {
+    const notes = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    const octaves = ['2', '3', '4', '5'];
+    let pattern = [];
+    
+    for (let i = 0; i < 5; i++) {
+      if (Math.random() < 0.3) {
+        let group = [];
+        const repeats = Math.floor(Math.random() * 3) + 2;
+        for (let j = 0; j < 3; j++) {
+          group.push(notes[Math.floor(Math.random() * notes.length)] + 
+                    octaves[Math.floor(Math.random() * octaves.length)]);
+        }
+        pattern.push(`[${group.join(' ')}]*${repeats}`);
+      } else {
+        pattern.push(notes[Math.floor(Math.random() * notes.length)] + 
+                    octaves[Math.floor(Math.random() * octaves.length)]);
+      }
+    }
+    
+    return pattern.join(' ');
+  }
+
+  function playsound() {
+    try {
+      initStrudel();
+      document.getElementById('play-side').addEventListener('click', () => note(generateStrudelPattern()).jux(rev).play());
+      document.getElementById('stop-side').addEventListener('click', () => hush());
+    } catch (e) {
+      console.error(e);
+      errorDiv.textContent = e.message;
+    }
+  }
+
+  stopButton.addEventListener('click', () => {
+    repl.editor.repl.stop();
+    errorDiv.textContent = '';
+  });
+
+</script>
